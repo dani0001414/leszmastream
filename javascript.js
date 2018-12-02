@@ -1,5 +1,5 @@
-/**MobilBarát Menetrend Testreszabása. */
-scriptVersion = "2.5.7";
+/**Oszt lesz Ma Sztrím???*/
+scriptVersion = "1.0";
 
 /*Streamer adatok megadása*/
 var streamer = "wearethevr";
