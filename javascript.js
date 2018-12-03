@@ -29,7 +29,9 @@ function CurrentTime() {
 }
 
 function CurrentDay() {
-    var now = new Date();
+	var nd = new Date();
+	var utc = nd.getTime() + (nd.getTimezoneOffset() * 60000);
+	var now = new Date(utc);
     var startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 	var currentMillisecTimestamp = startOfDay.getTime();
 	return currentMillisecTimestamp / 1000;
@@ -38,6 +40,7 @@ function CurrentDay() {
 function Timestamp(b) {
 	var twitchServerTime = b.substring(0, b.search("T"));
 	var utcDate = twitchServerTime;
+//	var d = new Date(utcDate);
     var localDate = new Date(utcDate);
     var offset = localDate.getTimezoneOffset()*60;
     var localDate = localDate.getTime() / 1000;
