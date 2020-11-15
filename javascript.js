@@ -48,45 +48,49 @@ function Timestamp(b) {
 	return localDate;
 }
 
-function HttpPost(url, callback) {
-	var http = new XMLHttpRequest();
-	/*fromTime = "2018-06-10T14:26:00Z";*/
-	var params = "[{\"variables\":{\"channelLogin\":\"" + streamer + "\",\"limit\":20,\"before\":null,\"after\":\"" + fromTime + "\",\"sortOrder\":\"ASC\",\"following\":true},\"extensions\":{},\"operationName\":\"EventsPage_EventScheduleQuery\",\"query\":\"query EventsPage_EventScheduleQuery($channelLogin: String!, $limit: Int, $cursor: Cursor, $before: Time, $after: Time, $following: Boolean!, $sortOrder: SortOrder) {  user(login: $channelLogin) {    id    eventLeaves(first: $limit, after: $cursor, criteria: {endsBefore: $before, endsAfter: $after, sortOrder: $sortOrder}) {      pageInfo {        hasNextPage        __typename      }      edges {        cursor        node {          id          self @include(if: $following) {            isFollowing            __typename          }          ... on EventLeaf {            title            startAt            endAt            game {              id              displayName              __typename            }            channel {              id              login              displayName              __typename            }            imageURL(width: 320, height: 180)            __typename          }          __typename        }        __typename      }      __typename    }    __typename  }}\"},{\"operationName\":\"ChannelPage_ChannelInfoBar_User_RENAME1\",\"variables\":{\"login\":\"" + streamer + "\"},\"extensions\":{\"persistedQuery\":{\"version\":1,\"sha256Hash\":\"af26d8d34bc0a201c463bd83b00b07d48c6dd7595993aad579cb5a8347386f83\"}}},{\"operationName\":\"VideoMarkersChatCommand\",\"variables\":{\"channelLogin\":\"" + streamer + "\"},\"extensions\":{\"persistedQuery\":{\"version\":1,\"sha256Hash\":\"c65f8b33e3bcccf2b16057e8f445311d213ecf8729f842ccdc71908231fa9a78\"}}}]";
-	http.open('POST', url, true);
-	/*kérésküldés*/
-	http.setRequestHeader('Client-ID', ApiKey);
-	http.setRequestHeader('Content-type', 'application/json');
-	http.send(params);
-	http.onreadystatechange = function () {
-		if (http.readyState == 4) {
-			if (http.status == 200) {
-				callback(http.responseText);
-			} else {
-				document.getElementById("no_stream").innerHTML = "<img src=\"" + offlinePic + "\" alt=\"23\" width=\"320\"><br><h3 style=\"font-family:rockwell; color:grey\">" + offlineText + "</h3>";
-				internetStatus = "offline";
-			}
-		}
-	}
+function HttpGetFeature(url, callback) {
+
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+            callback(xhttp.responseText);
+
+        }
+    };
+    xhttp.open("GET", url, true);
+    xhttp.send();
+
 }
+
 var events, eventsLength, todayEventsCount;
-HttpPost("https://gql.twitch.tv/gql", EventsArray2);
 
-function EventsArray2(data) {
-	events = data;
-    events = JSON.parse(events);
-    
+HttpGetFeature("https://dani0001414.github.io/mm.json", eventsDataGet)
 
-	events = events["0"].data.user.eventLeaves.edges;
-    eventsLength = events.length;
-    var currentDay = CurrentDay();
+function eventsDataGet(data) {
+    events = JSON.parse(data);
+	eventsLength = events.length;
+	
+	var currentDay = CurrentDay();
 
     todayEventsCount=0;
 	for (var i = 0; i < eventsLength; i++) {
     
-        if(Timestamp(events[i].node.startAt) == currentDay) {
+        if(Timestamp(events[i].event_start_unix) == currentDay) {
             todayEventsCount++;
         }
 	}
     if(todayEventsCount>0) {document.getElementById("text").innerHTML = "Lesz!";} else {document.getElementById("text").innerHTML = "Nem!";}
 
+    /*Változtatás : Ha az events tömb nem nulla akkor az első elem kezdési és végetérési időpontját beletesszük a streamEndZeroElement és a streamStartZeroElement változókba. */
+   /* if (eventsLength != 0) {
+        streamEndZeroElement = Timestamp(events[0].event_end_unix);
+        streamStartZeroElement = Timestamp(events[0].event_start_unix);
+        if (eventsLength > 1) {
+            stramStartFirstElement = Timestamp(events[1].event_start_unix);
+            streamEndFirstElement = Timestamp(events[1].event_end_unix);
+        }
+    }
+
+    HtmlStart();*/
 }
+
