@@ -4,9 +4,8 @@ scriptVersion = "1.0";
 /*Streamer adatok megadása*/
 var streamer = "wearethevr";
 var twitchLink = "https://www.twitch.tv/" + streamer;
-var noEventsPic = "https://i.imgur.com/5dZn6sc.png";
-var offlinePic = "https://i.imgur.com/5dZn6sc.png";
 var ApiKey = "kimne78kx3ncx6brgo4mv6wki5h1ko";
+var offlineText = "<font size=\"6\">Valamiért nem érem el a Twitch Szervereit! Próbáld újra tölteni.</font>";
 
 var fromTime = CurrentTimeTwitchServerFormat(0);
 
@@ -23,28 +22,19 @@ function CurrentTimeTwitchServerFormat(offset) {
 	return serverTime;
 }
 
-function CurrentTime() {
-	var currentMillisecTimestamp = new Date().getTime();
-	return currentMillisecTimestamp / 1000;
-}
-
 function CurrentDay() {
-	var nd = new Date();
-	var utc = nd.getTime() + (nd.getTimezoneOffset() * 60000);
-	var now = new Date(utc);
-    var startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+	var now = new Date();
+	//var now = new Date();
+	var startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 	var currentMillisecTimestamp = startOfDay.getTime();
 	return currentMillisecTimestamp / 1000;
 }
 
 function Timestamp(b) {
-	var twitchServerTime = b.substring(0, b.search("T"));
-	var utcDate = twitchServerTime;
-//	var d = new Date(utcDate);
-    var localDate = new Date(utcDate);
-    var offset = localDate.getTimezoneOffset()*60;
-    var localDate = localDate.getTime() / 1000;
-    localDate = localDate + offset;
+	var twitchServerTime = b.substring(0, 16) + ":00Z";
+	var localDate = new Date(twitchServerTime);
+	var startOfDay = new Date(localDate.getFullYear(), localDate.getMonth(), localDate.getDate());
+	var localDate = startOfDay.getTime() / 1000;
 	return localDate;
 }
 
@@ -61,36 +51,52 @@ function HttpGetFeature(url, callback) {
     xhttp.send();
 
 }
+var events, eventsLength, todayEventsCount,liveStatus;
 
-var events, eventsLength, todayEventsCount;
+HttpGetFeature("https://script.google.com/macros/s/AKfycbwNIIdxzydP9Xa85GHqXI6jxZwAJ9a7Er8HKk0dtyl-u_gcOUu8/exec?streamer=wearethevr", liveData);
 
-HttpGetFeature("https://dani0001414.github.io/mm.json", eventsDataGet)
+function liveData(data)
+{
+	liveData = data;
+    liveData = JSON.parse(liveData);
+    coverLive = null;
+    titleLive = null;
+    liveStatus = null;
+    gameLiveStatus = null;
+    if (liveData.data.length > 0) {
+        coverLive = liveData.data['0'].thumbnail_url;
+        titleLive = liveData.data['0'].title;
+        liveStatus = liveData.data['0'].type;
+	}
+	HttpGetFeature("https://dani0001414.github.io/mm.json", eventsDataGet)
+}
 
-function eventsDataGet(data) {
+
+
+function eventsDataGet(data,liveStatus) {
     events = JSON.parse(data);
 	eventsLength = events.length;
 	
 	var currentDay = CurrentDay();
-
-    todayEventsCount=0;
-	for (var i = 0; i < eventsLength; i++) {
-    
-        if(Timestamp(events[i].event_start_unix) == currentDay) {
-            todayEventsCount++;
-        }
+	
+	var liveStatus ="live";
+	if(liveData == null) {
+        liveStatus=null;
+    } else if(liveData.title == null){
+        liveStatus=null;
 	}
-    if(todayEventsCount>0) {document.getElementById("text").innerHTML = "Lesz!";} else {document.getElementById("text").innerHTML = "Nem!";}
+	
+	todayEventsCount = 0;
+	for (var i = 0; i < eventsLength; i++) {
+		var brakeTitle = events[i].event_title;
+		var breakIndicator = brakeTitle.search("SZÜNET");
 
-    /*Változtatás : Ha az events tömb nem nulla akkor az első elem kezdési és végetérési időpontját beletesszük a streamEndZeroElement és a streamStartZeroElement változókba. */
-   /* if (eventsLength != 0) {
-        streamEndZeroElement = Timestamp(events[0].event_end_unix);
-        streamStartZeroElement = Timestamp(events[0].event_start_unix);
-        if (eventsLength > 1) {
-            stramStartFirstElement = Timestamp(events[1].event_start_unix);
-            streamEndFirstElement = Timestamp(events[1].event_end_unix);
-        }
-    }
+		if ((Timestamp(events[i].event_start_unix) == currentDay) & (breakIndicator < 0)) {
+			todayEventsCount++;
+		}
+	}
+	if (liveStatus != null) { document.getElementById("text").innerHTML = "<a target=\"_blank\" href=\"https://www.twitch.tv/wearethevr\">ÉPP MOST MEGY! 👀</a>"; } else {
+		if (todayEventsCount > 0) { document.getElementById("text").innerHTML = "<a target=\"_blank\" href=\"https://thevr.hu/mm/mm.html\">Lesz!</a>"; } else { document.getElementById("text").innerHTML = "Nem!"; }
+	}
 
-    HtmlStart();*/
 }
-
